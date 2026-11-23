@@ -33,15 +33,27 @@ TEMPLATES = [{
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {"default": {
-    "ENGINE": "django.db.backends.mysql",
-    "NAME": os.getenv("DB_NAME", "medicab_db"),
-    "USER": os.getenv("DB_USER", "root"),
-    "PASSWORD": os.getenv("DB_PASSWORD", ""),
-    "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-    "PORT": os.getenv("DB_PORT", "3306"),
-    "OPTIONS": {"charset": "utf8mb4"},
-}}
+USE_SQLITE = os.getenv("USE_SQLITE", "0" if (os.getenv("DB_HOST") == "db" or os.getenv("DB_ENGINE") == "mysql") else "1") == "1"
+
+if USE_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.getenv("DB_NAME", "medicab_db"),
+            "USER": os.getenv("DB_USER", "root"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+            "PORT": os.getenv("DB_PORT", "3306"),
+            "OPTIONS": {"charset": "utf8mb4"},
+        }
+    }
 AUTH_USER_MODEL = "accounts.User"
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
