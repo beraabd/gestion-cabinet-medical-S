@@ -1,0 +1,70 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: medicab-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-medicab_db}
+      MYSQL_USER: ${DB_USER:-medicab_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-medicab_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - medicab-network
+
+  backend:
+    build:
+      context: ./MediCAB/MediCaB-backend
+      dockerfile: Dockerfile
+    container_name: medicab-backend
+    restart: always
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-secret-key-change-me}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      DB_NAME: ${DB_NAME:-medicab_db}
+      DB_USER: ${DB_USER:-medicab_user}
+      DB_PASSWORD: ${DB_PASSWORD:-medicab_pass}
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./MediCAB/MediCaB-backend:/app
+    command: >
+      sh -c "python manage.py makemigrations accounts clinic &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - medicab-network
+
+  frontend:
+    build:
+      context: ./MediCAB/MediCaB-frontend
+      dockerfile: Dockerfile
+    container_name: medicab-frontend
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - medicab-network
+
+volumes:
+  mysql_data:
+
+networks:
+  medicab-network:
+    driver: bridge
