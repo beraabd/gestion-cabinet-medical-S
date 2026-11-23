@@ -42,11 +42,7 @@ jobs:
         env:
           DJANGO_SECRET_KEY: 'ci-secret-key-for-testing-only'
           DJANGO_DEBUG: '1'
-          DB_NAME: medicab_db
-          DB_USER: root
-          DB_PASSWORD: rootpassword
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
+          USE_SQLITE: '1'
         run: |
           cd MediCAB/MediCaB-backend
           python manage.py check
